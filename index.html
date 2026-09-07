@@ -293,11 +293,18 @@ const DIR = fm.joinPath(fm.documentsDirectory(), 'fare-widget');
 if (!fm.fileExists(DIR)) fm.createDirectory(DIR, true);
 const STATE = fm.joinPath(DIR, 'state.json');
 
+// 주의: Scriptable 의 readString 은 파일이 없으면 예외가 아니라 null 을 준다.
+// JSON.parse(null) 은 "null" 을 파싱해 null 을 돌려주므로 반드시 걸러야 한다.
 function loadState() {
   try {
-    return JSON.parse(fm.readString(STATE));
+    if (!fm.fileExists(STATE)) return {};
+    const raw = fm.readString(STATE);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return parsed;
   } catch (e) {
-    return {};
+    return {}; // 파일이 깨졌으면 처음부터 다시 쌓는다
   }
 }
 function saveState(s) {
@@ -461,7 +468,8 @@ async function logoFor(code) {
   const path = fm.joinPath(DIR, 'logo-' + code + '.png');
   if (fm.fileExists(path)) {
     try {
-      return fm.readImage(path);
+      const cached = fm.readImage(path);
+      if (cached) return cached; // readImage 도 실패 시 null 을 준다 → 아래서 다시 받는다
     } catch (e) {
       /* 캐시가 깨졌으면 다시 받는다 */
     }
@@ -560,11 +568,13 @@ async function collect() {
   const results = await Promise.all(
     CONFIG.schedules.map(async (sc) => {
       const key = keyOf(sc);
-      const prev = state[key] || { history: [] };
+      const prev = state[key] || {};
+      // 저장된 기록이 깨져 있어도 위젯이 죽지 않게 정규화한다
+      const prevHistory = Array.isArray(prev.history) ? prev.history : [];
 
       // 방금 받아온 값이 있으면 네트워크를 아낀다
-      if (prev.snapshot && now - prev.fetchedAt < guard) {
-        return { sc: sc, snap: prev.snapshot, history: prev.history, stale: false, prevPrice: prev.prevPrice };
+      if (prev.snapshot && now - (prev.fetchedAt || 0) < guard) {
+        return { sc: sc, snap: prev.snapshot, history: prevHistory, stale: false, prevPrice: prev.prevPrice };
       }
 
       try {
@@ -574,9 +584,9 @@ async function collect() {
 
         const legs = legInfo(sc, r.itineraries, r.status);
         const price = rows[0].price;
-        const lastPrice = prev.history.length ? prev.history[prev.history.length - 1][1] : null;
+        const lastPrice = prevHistory.length ? prevHistory[prevHistory.length - 1][1] : null;
 
-        const history = prev.history.concat([[now, price]]).slice(-(CONFIG.historyLimit || 500));
+        const history = prevHistory.concat([[now, price]]).slice(-(CONFIG.historyLimit || 500));
         const snap = {
           rows: rows,
           legs: legs,
@@ -595,7 +605,7 @@ async function collect() {
       } catch (e) {
         console.error(sc.title + ': ' + e.message);
         if (prev.snapshot) {
-          return { sc: sc, snap: prev.snapshot, history: prev.history, stale: true, prevPrice: prev.prevPrice, error: e.message };
+          return { sc: sc, snap: prev.snapshot, history: prevHistory, stale: true, prevPrice: prev.prevPrice, error: e.message };
         }
         return { sc: sc, snap: null, history: [], stale: true, error: e.message };
       }
