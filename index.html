@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>운임 추적 위젯 만들기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --ground: #f2f4f6;
+    --surface: #ffffff;
+    --fill: #f2f4f6;
+    --fill-2: #e8ebee;
+    --text: #191f28;
+    --sub: #4e5968;
+    --dim: #8b95a1;
+    --blue: #3182f6;
+    --blue-weak: #e8f2fe;
+    --red: #f04452;
+    --red-weak: #fdecee;
+    --code-bg: #191f28;
+    --code-text: #e8ebee;
+    --shadow: 0 1px 3px rgba(25,31,40,.04), 0 8px 24px rgba(25,31,40,.06);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--ground); color: var(--text);
+    font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+    font-size: 15px; line-height: 1.6; letter-spacing: -.01em;
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 48px 20px 96px; }
+
+  h1 { font-size: clamp(24px, 5vw, 30px); font-weight: 700; letter-spacing: -.035em; line-height: 1.25; margin: 0 0 8px; }
+  .lede { color: var(--sub); font-size: 14.5px; margin: 0 0 32px; }
+  .lede a { color: var(--blue); text-decoration: none; font-weight: 500; }
+
+  .card { background: var(--surface); border-radius: 22px; padding: 28px 26px; box-shadow: var(--shadow); }
+  .card + .card { margin-top: 16px; }
+  h2 { font-size: 17px; font-weight: 700; letter-spacing: -.03em; margin: 0 0 4px; }
+  .cd { color: var(--dim); font-size: 12.5px; margin: 0 0 20px; }
+
+  .fl { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .fl strong { font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
+  .fl span { font-size: 11.5px; color: var(--dim); font-weight: 500; }
+
+  .slot { margin-bottom: 10px; }
+  .slot textarea {
+    display: block; width: 100%; resize: none; overflow: hidden;
+    font-family: inherit; font-size: 12.5px; line-height: 1.5; color: var(--sub);
+    background: var(--fill); border: 1.5px solid transparent; border-radius: 14px;
+    padding: 13px 15px; min-height: 46px;
+    transition: border-color .15s, background .15s;
+  }
+  .slot textarea::placeholder { color: var(--dim); }
+  .slot textarea:focus { outline: none; border-color: var(--blue); background: var(--surface); }
+  .slot.bad textarea { border-color: var(--red); background: var(--red-weak); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; align-items: center; }
+  .chip {
+    font-size: 11.5px; font-weight: 500; padding: 5px 10px; border-radius: 8px;
+    background: var(--fill); color: var(--sub);
+  }
+  .chip.b {
+    background: var(--blue-weak); color: var(--blue); font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip.b img { width: 15px; height: 15px; border-radius: 4px; display: block; }
+  .err { font-size: 12px; color: var(--red); font-weight: 500; margin-top: 8px; }
+
+  .pay { display: flex; align-items: center; gap: 11px; margin-bottom: 10px; }
+  .pay .n {
+    width: 21px; height: 21px; border-radius: 50%; background: var(--blue); color: #fff;
+    display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: none;
+  }
+  .pay .n.off { background: var(--fill-2); color: var(--dim); }
+  select {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 13.5px; font-weight: 500; color: var(--text);
+    background: var(--fill); border: 1.5px solid transparent; border-radius: 14px;
+    padding: 12px 14px; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5.5L7 9.5L11 5.5' stroke='%238b95a1' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center;
+  }
+  select:focus { outline: none; border-color: var(--blue); background-color: var(--surface); }
+  .hint { font-size: 11.5px; color: var(--dim); margin: 2px 0 0; }
+
+  .btn {
+    display: block; width: 100%; font-family: inherit;
+    font-size: 15.5px; font-weight: 700; letter-spacing: -.02em;
+    padding: 16px; border-radius: 14px; border: 0;
+    background: var(--blue); color: #fff; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:disabled { background: var(--fill-2); color: var(--dim); cursor: not-allowed; }
+  .btn.ghost { background: var(--fill); color: var(--sub); }
+
+  /* 위젯 미리보기 — iOS 미디엄 329 × 155 pt 실측 */
+  .pvwrap { display: flex; justify-content: center; padding: 6px 0 2px; }
+  .scaler { width: 329px; height: 155px; max-width: 100%; }
+  .wg {
+    width: 329px; height: 155px; transform-origin: top left;
+    background: #fff; color: #191f28;
+    --w-sub: #4e5968; --w-dim: #8b95a1; --w-hair: #f2f4f6;
+    --w-up: #f04452; --w-down: #3182f6;
+    border-radius: 24px; overflow: hidden; padding: 14px 16px 11px;
+    display: flex; flex-direction: column; line-height: 1.25; letter-spacing: -.02em;
+    box-shadow: 0 6px 22px rgba(25,31,40,.12);
+  }
+  .wtop { display: flex; align-items: center; gap: 7px; flex: none; }
+  .wtop img { width: 20px; height: 20px; border-radius: 6px; display: block; flex: none; }
+  .wtop .rt { font-size: 14.5px; font-weight: 700; letter-spacing: -.03em; }
+  .wtop .cd2 { font-size: 10px; color: var(--w-dim); font-weight: 500; }
+  .wtop .dt { margin-left: auto; font-size: 10px; color: var(--w-dim); font-weight: 500; }
+  .wbase { flex: none; font-size: 9.5px; font-weight: 500; color: var(--w-dim); margin-top: 4px; line-height: 1.2; }
+  .whero { flex: none; display: flex; align-items: flex-end; gap: 3px; margin-top: 1px; }
+  .whero .v { font-size: 26px; font-weight: 700; letter-spacing: -.04em; line-height: 1.05; }
+  .whero .u { font-size: 12px; font-weight: 500; color: var(--w-sub); padding-bottom: 2px; }
+  .whero .dl { margin-left: auto; font-size: 12.5px; font-weight: 700; padding-bottom: 3px; color: var(--w-dim); }
+  .wph { flex: none; margin-top: 4px; height: 22px; border-radius: 5px; background: var(--w-hair);
+         display: grid; place-items: center; font-size: 9px; color: var(--w-dim); font-weight: 500; }
+  .wrows { flex: none; margin-top: auto; }
+  .wrow { display: flex; align-items: center; padding: 3px 0; font-size: 10.5px; line-height: 1.25; }
+  .wrow + .wrow { border-top: 1px solid var(--w-hair); }
+  .wrow .k { color: var(--w-dim); font-weight: 500; }
+  .wrow .p { margin-left: auto; font-weight: 700; color: var(--w-sub); }
+  .wlist { flex: none; margin-top: 4px; }
+  .wi { display: flex; align-items: center; gap: 9px; padding: 3px 0; }
+  .wi + .wi { border-top: 1px solid var(--w-hair); }
+  .wi .marks { display: flex; align-items: center; flex: none; }
+  .wi .marks img { width: 17px; height: 17px; border-radius: 5px; display: block; }
+  .wi .marks img + img { margin-left: -5px; box-shadow: 0 0 0 1.5px #fff; }
+  .wi .id { min-width: 82px; }
+  .wi .id b { font-size: 12px; font-weight: 700; letter-spacing: -.03em; display: block; }
+  .wi .id i { font-size: 8.5px; font-weight: 500; color: var(--w-dim); font-style: normal; display: block; }
+  .wi .ph { width: 56px; height: 20px; border-radius: 4px; background: var(--w-hair); flex: none; }
+  .wi .pr { margin-left: auto; text-align: right; }
+  .wi .pr b { font-size: 14.5px; font-weight: 700; letter-spacing: -.035em; display: block; }
+  .wi .pr i { font-size: 9.5px; font-weight: 700; color: var(--w-dim); font-style: normal; display: block; }
+  .pvnote { text-align: center; font-size: 11.5px; color: var(--dim); margin: 12px 0 0; }
+
+  .out { display: none; }
+  .out.on { display: block; }
+  .oh { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; font-weight: 500; color: var(--dim); }
+  .oh .sp { margin-left: auto; }
+  .lnk { background: none; border: 0; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--blue); cursor: pointer; padding: 0; }
+  pre {
+    margin: 0; padding: 16px 18px; background: var(--code-bg); color: var(--code-text);
+    border-radius: 14px; font-size: 11.5px; line-height: 1.7; overflow: auto; max-height: 320px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0;
+    white-space: pre;
+  }
+  .dlrow { display: flex; gap: 10px; margin-top: 12px; }
+  .dlrow .btn { flex: 1; font-size: 14px; padding: 13px; }
+
+  .steps { display: grid; gap: 13px; }
+  .st { display: flex; gap: 11px; align-items: flex-start; }
+  .st .n {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--fill-2); color: var(--sub);
+    display: grid; place-items: center; font-size: 11px; font-weight: 700; flex: none; margin-top: 2px;
+  }
+  .st p { margin: 0; font-size: 13px; color: var(--sub); line-height: 1.6; }
+  .st p b { color: var(--text); font-weight: 700; }
+
+  .notes { margin-top: 16px; display: grid; gap: 9px; }
+  .note { background: var(--surface); border-radius: 14px; padding: 15px 17px; font-size: 13px; color: var(--sub); line-height: 1.65; box-shadow: var(--shadow); }
+  .note b { color: var(--text); font-weight: 700; }
+  .note .t { display: block; font-size: 11px; font-weight: 700; color: var(--blue); margin-bottom: 2px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff; font-size: 13px; font-weight: 500;
+    padding: 11px 20px; border-radius: 999px; opacity: 0; pointer-events: none;
+    transition: opacity .2s, transform .2s; z-index: 10;
+  }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 420px) {
+    .card { padding: 22px 18px; border-radius: 18px; }
+    .scaler { height: 148px; }
+    .wg { transform: scale(.95); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>운임 추적 위젯 만들기</h1>
+  <p class="lede">
+    <a href="https://flight.naver.com/" target="_blank" rel="noopener">네이버 항공권</a>에서 원하는 편을 고른 뒤
+    주소창 URL을 붙여넣으세요. iOS 중간 크기 위젯용 Scriptable 코드를 만들어 드립니다.
+  </p>
+
+  <div class="card">
+    <h2>추적할 항공권</h2>
+    <p class="cd">편을 클릭해 상세 화면까지 들어간 뒤의 URL이어야 합니다.</p>
+
+    <div class="fl"><strong>항공편</strong><span>최대 3개</span></div>
+    <div id="slots"></div>
+  </div>
+
+  <div class="card">
+    <h2>결제수단</h2>
+    <p class="cd">고른 카드의 즉시할인가를 함께 조회합니다. 모든 결제수단 기준가는 항상 표시됩니다.</p>
+    <div id="pays"></div>
+    <p class="hint">고른 순서와 무관하게, 세 가격 중 가장 싼 값이 위로 올라갑니다.</p>
+  </div>
+
+  <div class="card">
+    <h2>위젯 미리보기</h2>
+    <p class="cd">입력한 항공편이 위젯에 어떻게 들어가는지 확인하세요. 실측 329 × 155 pt.</p>
+    <div class="pvwrap"><div class="scaler"><div class="wg" id="pv"></div></div></div>
+    <p class="pvnote" id="pvnote">항공편 URL을 붙여넣으면 미리보기가 채워집니다.</p>
+  </div>
+
+  <div class="card">
+    <button class="btn" id="gen" type="button" disabled>코드 만들기</button>
+
+    <div class="out" id="out">
+      <div class="oh" style="margin-top:24px">
+        <span id="meta">widget.js</span>
+        <span class="sp"></span>
+        <button class="lnk" id="copy" type="button">코드 복사</button>
+      </div>
+      <pre id="code"></pre>
+      <div class="dlrow">
+        <button class="btn ghost" id="dl" type="button">.js 파일로 내려받기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>설치</h2>
+    <p class="cd">App Store 에서 Scriptable 을 먼저 받아 두세요. 무료입니다.</p>
+    <div class="steps">
+      <div class="st"><span class="n">1</span><p><b>코드 복사</b>를 누르고 Scriptable 을 열어 우측 상단 <b>+</b> 로 새 스크립트를 만든 뒤 붙여넣습니다. 이름은 아무렇게나 지어도 됩니다.</p></div>
+      <div class="st"><span class="n">2</span><p>홈 화면 빈 곳을 길게 눌러 <b>위젯 추가 → Scriptable → 중간 크기</b>를 놓습니다.</p></div>
+      <div class="st"><span class="n">3</span><p>놓인 위젯을 길게 눌러 <b>위젯 편집</b> → <b>Script</b> 를 방금 만든 스크립트로 지정합니다. <b>When Interacting</b> 은 <b>Run Script</b> 로 두세요.</p></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <span class="t">갱신</span>
+      <b>iOS 가 갱신 시점을 정합니다.</b> 위젯은 깨어날 때마다 네이버를 새로 조회하지만 실제 주기는 보통 15분~1시간입니다. 위젯을 탭하면 즉시 최신값으로 다시 그립니다.
+    </div>
+    <div class="note">
+      <span class="t">그래프</span>
+      <b>설치한 순간부터 쌓입니다.</b> 네이버가 과거 시세를 주지 않아 소급 채우기가 불가능합니다. 첫날은 안내 문구가 보이고, 값이 두 개 이상 모이면 선이 그려집니다.
+    </div>
+    <div class="note">
+      <span class="t">주의</span>
+      개인용 저빈도 조회를 전제로 만들었습니다. 위젯은 같은 일정을 2분 안에 다시 조회하지 않도록 스스로 제한합니다. 일정이 매진되거나 편명이 바뀌면 위젯이 마지막으로 받은 값을 <b>갱신 실패</b> 표시와 함께 보여줍니다.
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="text/plain" id="tpl">// ─────────────────────────────────────────────────────────────
+//  운임 추적 위젯 · Scriptable
+//  네이버 항공권에서 고른 편의 운임을 직접 조회해 홈 화면에 띄웁니다.
+//  중간(Medium) 크기 위젯에 맞춰 설계했습니다.
+// ─────────────────────────────────────────────────────────────
+
+/*__CONFIG__*/
+
+// ── 상수 ─────────────────────────────────────────────────────
+const API = 'https://flight-api.naver.com/flight/international/searchFlights';
+const LOGO_BASE = 'https://techminds.pstatic.net/flight/vertical-static/flight/airlines/';
+const UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+// 라이트 전용 팔레트
+const CL = {
+  bg: '#ffffff',
+  text: '#191f28',
+  sub: '#4e5968',
+  dim: '#8b95a1',
+  hair: '#f2f4f6',
+  up: '#f04452', // 인상
+  down: '#3182f6', // 인하
+};
+
+const PLAIN = 'A01'; // 성인 / 모든 결제수단
+
+// ── 저장소 ───────────────────────────────────────────────────
+const fm = FileManager.local();
+const DIR = fm.joinPath(fm.documentsDirectory(), 'fare-widget');
+if (!fm.fileExists(DIR)) fm.createDirectory(DIR, true);
+const STATE = fm.joinPath(DIR, 'state.json');
+
+function loadState() {
+  try {
+    return JSON.parse(fm.readString(STATE));
+  } catch (e) {
+    return {};
+  }
+}
+function saveState(s) {
+  try {
+    fm.writeString(STATE, JSON.stringify(s));
+  } catch (e) {
+    console.error('상태 저장 실패: ' + e.message);
+  }
+}
+
+// ── 네이버 조회 ───────────────────────────────────────────────
+function keyOf(sc) {
+  return sc.pin.join('-');
+}
+
+function listUrl(sc) {
+  const legs = sc.legs.map((l) => l.from + ':' + l.fromType + '-' + l.to + ':' + l.toType + '-' + l.date).join('/');
+  return (
+    'https://flight.naver.com/flights/international/' +
+    legs +
+    '?adult=' + CONFIG.adult + '&isDirect=' + !!sc.isNonstop + '&fareType=' + CONFIG.seatClass
+  );
+}
+
+// sec-fetch-* 헤더가 빠지면 서버가 503 을 준다. 전부 필수.
+function headersFor(sc) {
+  return {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream',
+    'Accept-Language': 'ko-KR,ko;q=0.9',
+    Origin: 'https://flight.naver.com',
+    Referer: listUrl(sc),
+    'sec-fetch-site': 'same-site',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-dest': 'empty',
+    'User-Agent': UA,
+  };
+}
+
+function bodyFor(sc) {
+  return {
+    tripType: sc.tripType,
+    device: 'pc',
+    seatClass: CONFIG.seatClass,
+    adultCount: CONFIG.adult,
+    childCount: CONFIG.child || 0,
+    infantCount: CONFIG.infant || 0,
+    isNonstop: !!sc.isNonstop,
+    openReturnDays: 0,
+    initialRequest: true,
+    itineraries: sc.legs.map((l) => ({
+      departureLocationCode: l.from,
+      departureLocationType: l.fromType,
+      arrivalLocationCode: l.to,
+      arrivalLocationType: l.toType,
+      departureDate: l.date,
+    })),
+    flightFilter: { limit: 200, skip: 0, filter: { selectedItineraries: sc.pin } },
+  };
+}
+
+// SSE 이벤트는 매번 "지금까지의 전체 결과"를 담은 누적 스냅샷이다.
+// 콜드 검색이면 스무 개 가까이 흘러오는데, 전부 JSON.parse 하면
+// 240KB 짜리 객체 그래프를 스무 개 동시에 들고 있게 되어 위젯이 메모리로 죽는다.
+// 그래서 뒤에서부터 훑어 원하는 조합이 담긴 첫 스냅샷 하나만 파싱한다.
+function pickSnapshot(text, key) {
+  const blocks = text.split(/\r?\n\r?\n/);
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const payload = blocks[i]
+      .split(/\r?\n/)
+      .filter((l) => l.indexOf('data:') === 0)
+      .map((l) => l.slice(5).trim())
+      .join('');
+    if (!payload) continue;
+
+    let d;
+    try {
+      d = JSON.parse(payload);
+    } catch (e) {
+      continue; // 끊긴 청크는 건너뛴다
+    }
+
+    const maps = d.fareMappings || [];
+    for (const m of maps) {
+      if (m.itineraryIds !== key) continue;
+      const itin = new Map();
+      for (const it of d.itineraries || []) itin.set(it.itineraryId, it);
+      return { mapping: m, itineraries: itin, status: d.status || {} };
+    }
+  }
+  return null;
+}
+
+// 서버의 검색 캐시(10~15분)가 살아 있으면 1초/240KB 로 끝나지만,
+// 식으면 항공사·대리점 20곳을 실제로 폴링하며 누적 스냅샷을 여러 번 흘린다(15~20초/2~3MB).
+// 그래서 넉넉히 기다리고, 못 받으면 호출한 쪽에서 지난 값으로 대체한다.
+async function fetchSchedule(sc) {
+  const req = new Request(API);
+  req.method = 'POST';
+  req.headers = headersFor(sc);
+  req.body = JSON.stringify(bodyFor(sc));
+  req.timeoutInterval = 30;
+
+  const txt = await req.loadString();
+  const code = req.response ? req.response.statusCode : 0;
+  if (code >= 400) throw new Error('HTTP ' + code);
+
+  const snap = pickSnapshot(txt, keyOf(sc));
+  if (!snap) throw new Error('해당 편의 운임이 없습니다 (매진 또는 편명 변경)');
+  return snap;
+}
+
+// ── 운임 고르기 ───────────────────────────────────────────────
+// 후보 세 개(내 결제수단 2개 + 모든 결제수단)를 싼 순으로 세운다.
+function priceRows(mapping) {
+  const min = {};
+  for (const f of mapping.fares) {
+    const k = f.fareType;
+    const v = f.adult.totalFare;
+    if (min[k] == null || v < min[k]) min[k] = v;
+  }
+
+  const rows = [];
+  for (const code of CONFIG.pay) {
+    if (min[code] != null) rows.push({ name: CONFIG.payNames[code] || code, price: min[code] });
+  }
+  if (min[PLAIN] != null) rows.push({ name: '모든 결제수단', price: min[PLAIN] });
+
+  // 카드 운임이 하나도 없으면 모든 결제수단만 남는다
+  rows.sort((a, b) => a.price - b.price);
+  return rows;
+}
+
+function legInfo(sc, itineraries, status) {
+  return sc.pin.map((id, i) => {
+    const it = itineraries.get(id);
+    const fallback = sc.legs[i] || {};
+    if (!it || !it.segments || !it.segments.length) {
+      return { from: fallback.from, to: fallback.to, date: fallback.date, flightNo: '', carrier: sc.airlines ? sc.airlines[i] : '' };
+    }
+    const s = it.segments[0];
+    const e = it.segments[it.segments.length - 1];
+    const c = s.marketingCarrier;
+    return {
+      from: s.departure.airportCode,
+      to: e.arrival.airportCode,
+      date: s.departure.date,
+      depTime: s.departure.time,
+      arrTime: e.arrival.time,
+      carrier: c.airlineCode,
+      flightNo: c.airlineCode + Number(c.flightNumber),
+      stops: it.segments.length - 1,
+      airlineName: (status.airlinesCodeMap || {})[c.airlineCode] || '',
+    };
+  });
+}
+
+// ── 항공사 로고 (한 번 받아 캐시) ──────────────────────────────
+async function logoFor(code) {
+  if (!code) return null;
+  const path = fm.joinPath(DIR, 'logo-' + code + '.png');
+  if (fm.fileExists(path)) {
+    try {
+      return fm.readImage(path);
+    } catch (e) {
+      /* 캐시가 깨졌으면 다시 받는다 */
+    }
+  }
+  try {
+    const r = new Request(LOGO_BASE + code + '.png');
+    r.timeoutInterval = 10;
+    const img = await r.loadImage();
+    fm.writeImage(path, img);
+    return img;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ── 표시용 헬퍼 ───────────────────────────────────────────────
+const won = (n) => n.toLocaleString('ko-KR');
+function mdd(d) {
+  return d ? d.slice(4, 6) + '.' + d.slice(6, 8) : ''; // 11.20, 12.04 — 자리수를 맞춰 리스트에서 정렬된다
+}
+function agoText(ms) {
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return '방금';
+  if (m < 60) return m + '분 전';
+  const h = Math.round(m / 60);
+  if (h < 24) return h + '시간 전';
+  return Math.round(h / 24) + '일 전';
+}
+function txt(parent, s, size, weight, color) {
+  const t = parent.addText(s);
+  t.font = weight === 'bold' ? Font.boldSystemFont(size) : weight === 'medium' ? Font.mediumSystemFont(size) : Font.systemFont(size);
+  t.textColor = new Color(color);
+  t.lineLimit = 1;
+  return t;
+}
+
+function sparkline(w, h, series, hex) {
+  if (!series || series.length < 2) return null;
+  const mn = Math.min.apply(null, series);
+  const mx = Math.max.apply(null, series);
+  const span = mx - mn || 1;
+  const padT = 3;
+  const padB = 2;
+
+  const dc = new DrawContext();
+  dc.size = new Size(w, h);
+  dc.opaque = false;
+  dc.respectScreenScale = true;
+
+  const pts = series.map((v, i) => {
+    const x = (i / (series.length - 1)) * (w - 5) + 2;
+    const y = h - padB - ((v - mn) / span) * (h - padT - padB);
+    return new Point(x, y);
+  });
+
+  const area = new Path();
+  area.move(new Point(pts[0].x, h));
+  for (const p of pts) area.addLine(p);
+  area.addLine(new Point(pts[pts.length - 1].x, h));
+  area.closeSubpath();
+  dc.addPath(area);
+  dc.setFillColor(new Color(hex, 0.09));
+  dc.fillPath();
+
+  const line = new Path();
+  line.move(pts[0]);
+  for (let i = 1; i < pts.length; i++) line.addLine(pts[i]);
+  dc.addPath(line);
+  dc.setStrokeColor(new Color(hex));
+  dc.setLineWidth(1.8);
+  dc.strokePath();
+
+  const last = pts[pts.length - 1];
+  dc.setFillColor(new Color(hex));
+  dc.fillEllipse(new Rect(last.x - 2.6, last.y - 2.6, 5.2, 5.2));
+
+  return dc.getImage();
+}
+
+// 그래프가 너무 촘촘해지지 않게 최근 구간을 고르게 솎는다
+function thin(series, max) {
+  if (series.length <= max) return series;
+  const step = series.length / max;
+  const out = [];
+  for (let i = 0; i < max; i++) out.push(series[Math.floor(i * step)]);
+  out[out.length - 1] = series[series.length - 1];
+  return out;
+}
+
+// ── 조회 + 상태 갱신 ──────────────────────────────────────────
+async function collect() {
+  const state = loadState();
+  const now = Date.now();
+  const guard = (CONFIG.minRefetchMinutes != null ? CONFIG.minRefetchMinutes : 2) * 60000;
+
+  const results = await Promise.all(
+    CONFIG.schedules.map(async (sc) => {
+      const key = keyOf(sc);
+      const prev = state[key] || { history: [] };
+
+      // 방금 받아온 값이 있으면 네트워크를 아낀다
+      if (prev.snapshot && now - prev.fetchedAt < guard) {
+        return { sc: sc, snap: prev.snapshot, history: prev.history, stale: false, prevPrice: prev.prevPrice };
+      }
+
+      try {
+        const r = await fetchSchedule(sc);
+        const rows = priceRows(r.mapping);
+        if (!rows.length) throw new Error('운임 없음');
+
+        const legs = legInfo(sc, r.itineraries, r.status);
+        const price = rows[0].price;
+        const lastPrice = prev.history.length ? prev.history[prev.history.length - 1][1] : null;
+
+        const history = prev.history.concat([[now, price]]).slice(-(CONFIG.historyLimit || 500));
+        const snap = {
+          rows: rows,
+          legs: legs,
+          price: price,
+          label: rows[0].name,
+          lowest: Math.min.apply(null, history.map((h) => h[1])),
+        };
+
+        state[key] = {
+          snapshot: snap,
+          history: history,
+          fetchedAt: now,
+          prevPrice: lastPrice != null ? lastPrice : prev.prevPrice != null ? prev.prevPrice : null,
+        };
+        return { sc: sc, snap: snap, history: history, stale: false, prevPrice: state[key].prevPrice };
+      } catch (e) {
+        console.error(sc.title + ': ' + e.message);
+        if (prev.snapshot) {
+          return { sc: sc, snap: prev.snapshot, history: prev.history, stale: true, prevPrice: prev.prevPrice, error: e.message };
+        }
+        return { sc: sc, snap: null, history: [], stale: true, error: e.message };
+      }
+    })
+  );
+
+  saveState(state);
+  return results;
+}
+
+// ── 렌더: 일정 하나 ───────────────────────────────────────────
+async function renderDetail(w, r) {
+  const snap = r.snap;
+  const leg0 = snap.legs[0] || {};
+  const legN = snap.legs[snap.legs.length - 1] || {};
+  const delta = r.prevPrice != null ? snap.price - r.prevPrice : 0;
+  const hex = delta > 0 ? CL.up : CL.down;
+
+  w.url = r.sc.naverUrl;
+
+  // 헤더
+  const top = w.addStack();
+  top.centerAlignContent();
+  const logo = await logoFor(leg0.carrier);
+  if (logo) {
+    const iv = top.addImage(logo);
+    iv.imageSize = new Size(20, 20);
+    iv.cornerRadius = 6;
+    top.addSpacer(7);
+  }
+  txt(top, leg0.from + ' → ' + leg0.to, 14.5, 'bold', CL.text);
+  top.addSpacer(7);
+  txt(top, snap.legs.map((l) => l.flightNo).filter(Boolean).join(' · '), 10, 'medium', CL.dim);
+  top.addSpacer();
+  const range = snap.legs.length > 1 ? mdd(leg0.date) + ' – ' + mdd(legN.date) : mdd(leg0.date);
+  txt(top, range, 10, 'medium', CL.dim);
+
+  // 기준 결제수단
+  w.addSpacer(4);
+  txt(w, snap.label + (r.stale ? ' · 갱신 실패' : ''), 9.5, 'medium', CL.dim);
+
+  // 히어로 가격
+  const hero = w.addStack();
+  hero.bottomAlignContent();
+  const v = hero.addText(won(snap.price));
+  v.font = Font.boldSystemFont(26);
+  v.textColor = new Color(CL.text);
+  v.minimumScaleFactor = 0.7;
+  v.lineLimit = 1;
+  hero.addSpacer(3);
+  const u = hero.addText('원');
+  u.font = Font.mediumSystemFont(12);
+  u.textColor = new Color(CL.sub);
+  hero.addSpacer();
+  if (delta) {
+    const d = hero.addText((delta > 0 ? '▴ ' : '▾ ') + won(Math.abs(delta)));
+    d.font = Font.boldSystemFont(12.5);
+    d.textColor = new Color(hex);
+  } else {
+    txt(hero, '변동 없음', 10, 'medium', CL.dim);
+  }
+
+  // 그래프
+  const img = sparkline(297, 22, thin(r.history.map((h) => h[1]), 40), hex);
+  w.addSpacer(4);
+  if (img) {
+    const iv = w.addImage(img);
+    iv.imageSize = new Size(297, 22);
+  } else {
+    const hint = w.addStack();
+    hint.size = new Size(297, 22);
+    hint.centerAlignContent();
+    txt(hint, '가격 기록이 쌓이면 그래프가 그려집니다', 9, 'regular', CL.dim);
+  }
+
+  // 나머지 가격 두 줄
+  w.addSpacer();
+  const rest = snap.rows.slice(1, 3);
+  rest.forEach((row, i) => {
+    if (i > 0) {
+      const hair = w.addStack();
+      hair.size = new Size(297, 1);
+      hair.backgroundColor = new Color(CL.hair);
+    }
+    const st = w.addStack();
+    st.centerAlignContent();
+    st.setPadding(3, 0, 3, 0);
+    txt(st, row.name, 10.5, 'medium', CL.dim);
+    st.addSpacer();
+    txt(st, won(row.price) + '원', 10.5, 'bold', CL.sub);
+  });
+}
+
+// ── 렌더: 일정 여러 개 ────────────────────────────────────────
+async function renderList(w, results) {
+  const newest = results.reduce((a, r) => Math.max(a, r.history.length ? r.history[r.history.length - 1][0] : 0), 0);
+  const anyStale = results.some((r) => r.stale);
+
+  const top = w.addStack();
+  top.centerAlignContent();
+  txt(top, '추적 중인 일정', 12.5, 'bold', CL.text);
+  top.addSpacer(7);
+  txt(top, results.length + '개', 10, 'medium', CL.dim);
+  top.addSpacer();
+  txt(top, (anyStale ? '⚠︎ ' : '') + (newest ? agoText(newest) : '—'), 10, 'medium', CL.dim);
+
+  const rowH = results.length >= 3 ? 3 : 9;
+  const sparkH = results.length >= 3 ? 20 : 22;
+
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (i > 0) {
+      const hair = w.addStack();
+      hair.size = new Size(297, 1);
+      hair.backgroundColor = new Color(CL.hair);
+    }
+
+    const row = w.addStack();
+    row.centerAlignContent();
+    row.setPadding(rowH, 0, rowH, 0);
+    row.url = r.sc.naverUrl;
+
+    if (!r.snap) {
+      txt(row, r.sc.title || '일정', 12, 'bold', CL.text);
+      row.addSpacer();
+      txt(row, '조회 실패', 10, 'medium', CL.dim);
+      continue;
+    }
+
+    const snap = r.snap;
+    const leg0 = snap.legs[0] || {};
+    const delta = r.prevPrice != null ? snap.price - r.prevPrice : 0;
+    const hex = delta > 0 ? CL.up : CL.down;
+
+    // 항공사 마크 (왕복 항공사가 다르면 둘 다)
+    const carriers = [];
+    for (const l of snap.legs) if (l.carrier && carriers.indexOf(l.carrier) < 0) carriers.push(l.carrier);
+    const marks = row.addStack();
+    marks.centerAlignContent();
+    for (let c = 0; c < Math.min(carriers.length, 2); c++) {
+      const img = await logoFor(carriers[c]);
+      if (!img) continue;
+      if (c > 0) marks.addSpacer(2);
+      const iv = marks.addImage(img);
+      iv.imageSize = new Size(17, 17);
+      iv.cornerRadius = 5;
+    }
+    row.addSpacer(9);
+
+    const id = row.addStack();
+    id.layoutVertically();
+    txt(id, leg0.from + ' → ' + leg0.to, 12, 'bold', CL.text);
+    txt(id, snap.legs.map((l) => l.flightNo).filter(Boolean).join(' · ') + ' · ' + mdd(leg0.date), 8.5, 'medium', CL.dim);
+
+    row.addSpacer(9);
+    const img = sparkline(56, sparkH, thin(r.history.map((h) => h[1]), 20), hex);
+    if (img) {
+      const iv = row.addImage(img);
+      iv.imageSize = new Size(56, sparkH);
+    } else {
+      row.addSpacer(56);
+    }
+
+    row.addSpacer();
+    const pr = row.addStack();
+    pr.layoutVertically();
+    const pv = pr.addText(won(snap.price) + '원');
+    pv.font = Font.boldSystemFont(14.5);
+    pv.textColor = new Color(CL.text);
+    pv.rightAlignText();
+    pv.lineLimit = 1;
+    const dv = pr.addText(delta ? (delta > 0 ? '▴ ' : '▾ ') + won(Math.abs(delta)) : '변동 없음');
+    dv.font = Font.boldSystemFont(9.5);
+    dv.textColor = new Color(delta ? hex : CL.dim);
+    dv.rightAlignText();
+  }
+}
+
+// ── 실행 ─────────────────────────────────────────────────────
+const widget = new ListWidget();
+widget.backgroundColor = new Color(CL.bg);
+widget.setPadding(14, 16, 11, 16);
+widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
+
+try {
+  const results = await collect();
+  const usable = results.filter((r) => r.snap);
+
+  if (!usable.length) {
+    txt(widget, '운임을 불러오지 못했습니다', 13, 'bold', CL.text);
+    widget.addSpacer(4);
+    const msg = widget.addText((results[0] && results[0].error) || '네트워크를 확인해 주세요');
+    msg.font = Font.systemFont(10);
+    msg.textColor = new Color(CL.dim);
+    msg.lineLimit = 3;
+  } else if (usable.length === 1) {
+    await renderDetail(widget, usable[0]);
+  } else {
+    await renderList(widget, usable);
+  }
+} catch (e) {
+  txt(widget, '오류', 13, 'bold', CL.text);
+  const msg = widget.addText(e.message);
+  msg.font = Font.systemFont(10);
+  msg.textColor = new Color(CL.dim);
+  msg.lineLimit = 3;
+}
+
+if (config.runsInWidget) {
+  Script.setWidget(widget);
+} else {
+  await widget.presentMedium();
+}
+Script.complete();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  var LOGO = 'https://techminds.pstatic.net/flight/vertical-static/flight/airlines/';
+  var MAX_FLIGHTS = 3;
+
+  var PAY_GROUPS = [
+    { g: '신용카드 즉시할인', items: [
+      ['A01/B96', '삼성 iD GLOBAL 카드'],
+      ['A01/B01', 'KB국민카드'],
+      ['A01/B09', '현대카드'],
+      ['A01/B19', '신한카드'],
+      ['A01/B05', '삼성카드'],
+      ['A01/B31', '하나카드'],
+      ['A01/B02', '롯데카드'],
+      ['A01/B12', '우리카드'],
+      ['A01/B04', 'BC카드'],
+      ['A01/B72', 'NH농협카드'],
+      ['A01/B13', 'NH채움카드'],
+      ['A01/B25', 'IBK기업은행카드']
+    ]},
+    { g: '이용실적 충족 시', items: [
+      ['A01/B16', '하나카드 (실적 충족)'],
+      ['A01/B91', 'KB국민카드 (실적 충족)'],
+      ['A01/B80', '현대 M2/M3 Edition2 (실적 충족)']
+    ]},
+    { g: '간편결제', items: [
+      ['A01/B74', '네이버페이']
+    ]}
+  ];
+  var PAY_NAME = {};
+  PAY_GROUPS.forEach(function (grp) {
+    grp.items.forEach(function (it) { PAY_NAME[it[0]] = it[1]; });
+  });
+
+  var SEAT = { Y: '일반석', P: '프리미엄일반석', C: '비즈니스석', F: '일등석' };
+  var TRIP = { OW: '편도', RT: '왕복', MD: '다구간' };
+
+  // ── URL 파싱 ────────────────────────────────────────────────
+  function parseNaverUrl(raw) {
+    var s = (raw || '').trim();
+    if (!s) return null;
+    var u;
+    try { u = new URL(/^https?:\/\//.test(s) ? s : 'https://' + s); }
+    catch (e) { throw new Error('URL 형식이 아닙니다.'); }
+
+    if (!/(^|\.)flight\.naver\.com$/.test(u.hostname)) throw new Error('네이버 항공권 URL이 아닙니다.');
+
+    var parts = u.pathname.split('/').filter(Boolean);
+    if (parts[0] !== 'flights') throw new Error('항공권 URL이 아닙니다.');
+    if (parts[1] === 'domestic') throw new Error('국내선은 아직 지원하지 않습니다. 국제선 URL을 넣어주세요.');
+    if (parts[1] !== 'international') throw new Error('국제선 항공권 URL이 아닙니다.');
+
+    var legTokens = parts.slice(parts[2] === 'detail' ? 3 : 2);
+    var legs = legTokens.map(function (t) {
+      var m = /^([A-Z]{3}):(city|airport)-([A-Z]{3}):(city|airport)-(\d{8})$/.exec(decodeURIComponent(t));
+      if (!m) throw new Error('출발·도착 구간을 읽을 수 없습니다.');
+      return { from: m[1], fromType: m[2], to: m[3], toType: m[4], date: m[5] };
+    });
+    if (!legs.length) throw new Error('구간 정보가 없습니다.');
+
+    var q = u.searchParams;
+    var sel = q.get('selectedFlight');
+    if (!sel) throw new Error('편을 고르지 않은 URL입니다. 네이버에서 원하는 편을 눌러 상세 화면까지 들어간 뒤 주소를 복사해 주세요.');
+
+    var pin = [], airlines = [];
+    sel.split(',').forEach(function (tok) {
+      var p = tok.split(':');
+      if (p.length < 2 || !p[1]) throw new Error('선택한 편 정보를 읽을 수 없습니다.');
+      pin.push(p[1]);
+      airlines.push(p[4] || '');
+    });
+    if (pin.length !== legs.length) throw new Error('구간 수(' + legs.length + ')와 선택한 편 수(' + pin.length + ')가 다릅니다.');
+
+    var seat = q.get('fareType') || 'Y';
+    if (!SEAT[seat]) seat = 'Y';
+
+    return {
+      legs: legs, pin: pin, airlines: airlines,
+      tripType: legs.length === 1 ? 'OW' : legs.length === 2 ? 'RT' : 'MD',
+      adult: Math.max(1, parseInt(q.get('adult') || '1', 10) || 1),
+      child: parseInt(q.get('child') || '0', 10) || 0,
+      infant: parseInt(q.get('infant') || '0', 10) || 0,
+      seatClass: seat,
+      isNonstop: q.get('isDirect') === 'true',
+      naverUrl: u.toString()
+    };
+  }
+
+  // itineraryId = YYYYMMDD + 출발3 + 도착3 + 항공사2 + 편명4
+  function decodeItin(id) {
+    var m = /^(\d{8})([A-Z]{3})([A-Z]{3})([0-9A-Z]{2})(\d{3,4})$/.exec(id);
+    if (!m) return null;
+    return { date: m[1], from: m[2], to: m[3], carrier: m[4], flightNo: m[4] + String(parseInt(m[5], 10)) };
+  }
+
+  function mdd(d) { return d ? d.slice(4, 6) + '.' + d.slice(6, 8) : ''; }
+  function hhmm(t) { return t ? t.slice(0, 2) + ':' + t.slice(2) : ''; }
+
+  // 파싱 결과를 위젯이 쓸 형태로 정리
+  function toSchedule(p) {
+    var d = p.pin.map(decodeItin);
+    var head = d[0] || {};
+    return {
+      title: (head.from || p.legs[0].from) + ' → ' + (head.to || p.legs[0].to),
+      naverUrl: p.naverUrl,
+      tripType: p.tripType,
+      isNonstop: p.isNonstop,
+      legs: p.legs,
+      pin: p.pin,
+      airlines: p.pin.map(function (id, i) {
+        var dd = decodeItin(id);
+        return (dd && dd.carrier) || p.airlines[i] || '';
+      })
+    };
+  }
+
+  // ── 상태 ────────────────────────────────────────────────────
+  var slots = [{ raw: '', parsed: null, error: null },
+               { raw: '', parsed: null, error: null },
+               { raw: '', parsed: null, error: null }];
+  var pays = ['A01/B96', 'A01/B01'];
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ── 입력 슬롯 ───────────────────────────────────────────────
+  function buildSlots() {
+    var host = $('slots');
+    host.innerHTML = '';
+    for (var i = 0; i < MAX_FLIGHTS; i++) {
+      var wrap = document.createElement('div');
+      wrap.className = 'slot';
+      wrap.dataset.i = String(i);
+
+      var ta = document.createElement('textarea');
+      ta.rows = 1;
+      ta.spellcheck = false;
+      ta.placeholder = i === 0 ? '네이버 항공권 상세 URL을 붙여넣으세요' : (i + 1) + '번째 항공편 URL (선택)';
+      ta.value = slots[i].raw;
+      ta.addEventListener('input', onInput);
+      ta.addEventListener('paste', function () { var t = this; setTimeout(function () { autosize(t); }, 0); });
+      wrap.appendChild(ta);
+
+      var info = document.createElement('div');
+      info.className = 'info';
+      wrap.appendChild(info);
+
+      host.appendChild(wrap);
+      autosize(ta);
+    }
+    renderSlots();
+  }
+
+  function autosize(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(46, ta.scrollHeight) + 'px';
+  }
+
+  function onInput(e) {
+    var wrap = e.target.closest('.slot');
+    var i = +wrap.dataset.i;
+    slots[i].raw = e.target.value;
+    autosize(e.target);
+    try {
+      slots[i].parsed = parseNaverUrl(e.target.value);
+      slots[i].error = null;
+    } catch (err) {
+      slots[i].parsed = null;
+      slots[i].error = err.message;
+    }
+    renderSlots();
+    renderPreview();
+    refreshButton();
+  }
+
+  function renderSlots() {
+    var wraps = document.querySelectorAll('#slots .slot');
+    for (var i = 0; i < wraps.length; i++) {
+      var w = wraps[i], s = slots[i];
+      var info = w.querySelector('.info');
+      info.innerHTML = '';
+      w.classList.toggle('bad', !!s.error);
+
+      if (s.error) {
+        var e = document.createElement('div');
+        e.className = 'err';
+        e.textContent = s.error;
+        info.appendChild(e);
+        continue;
+      }
+      if (!s.parsed) continue;
+
+      var chips = document.createElement('div');
+      chips.className = 'chips';
+      s.parsed.pin.forEach(function (id, k) {
+        var d = decodeItin(id);
+        var c = document.createElement('span');
+        c.className = 'chip b';
+        var carrier = (d && d.carrier) || s.parsed.airlines[k];
+        if (carrier) {
+          var img = document.createElement('img');
+          img.src = LOGO + carrier + '.png';
+          img.alt = '';
+          img.onerror = function () { this.remove(); };
+          c.appendChild(img);
+        }
+        var leg = s.parsed.legs[k];
+        var label = d
+          ? d.from + ' → ' + d.to + ' · ' + d.flightNo + ' · ' + mdd(d.date)
+          : leg.from + ' → ' + leg.to + ' · ' + mdd(leg.date);
+        c.appendChild(document.createTextNode(label));
+        chips.appendChild(c);
+      });
+
+      var meta = document.createElement('span');
+      meta.className = 'chip';
+      meta.textContent = '성인 ' + s.parsed.adult +
+        (s.parsed.child ? ' · 소아 ' + s.parsed.child : '') +
+        (s.parsed.infant ? ' · 유아 ' + s.parsed.infant : '') +
+        ' · ' + SEAT[s.parsed.seatClass] + ' · ' + TRIP[s.parsed.tripType] +
+        (s.parsed.isNonstop ? ' · 직항만' : '');
+      chips.appendChild(meta);
+      info.appendChild(chips);
+    }
+  }
+
+  // ── 결제수단 ────────────────────────────────────────────────
+  function buildPays() {
+    var host = $('pays');
+    host.innerHTML = '';
+    for (var i = 0; i < 2; i++) {
+      var row = document.createElement('div');
+      row.className = 'pay';
+
+      var n = document.createElement('span');
+      n.className = 'n' + (pays[i] ? '' : ' off');
+      n.textContent = String(i + 1);
+      row.appendChild(n);
+
+      var sel = document.createElement('select');
+      sel.dataset.i = String(i);
+      var none = document.createElement('option');
+      none.value = '';
+      none.textContent = i === 0 ? '선택하지 않음 (모든 결제수단만)' : '선택하지 않음';
+      sel.appendChild(none);
+
+      PAY_GROUPS.forEach(function (grp) {
+        var og = document.createElement('optgroup');
+        og.label = grp.g;
+        grp.items.forEach(function (it) {
+          var o = document.createElement('option');
+          o.value = it[0];
+          o.textContent = it[1];
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+
+      sel.value = pays[i] || '';
+      sel.addEventListener('change', function () {
+        var idx = +this.dataset.i;
+        var v = this.value;
+        // 같은 카드를 두 번 고르면 다른 칸을 비운다
+        if (v && pays[1 - idx] === v) pays[1 - idx] = '';
+        pays[idx] = v;
+        buildPays();
+        renderPreview();
+      });
+      row.appendChild(sel);
+      host.appendChild(row);
+    }
+  }
+
+  // ── 미리보기 ────────────────────────────────────────────────
+  function activeSchedules() {
+    return slots.filter(function (s) { return s.parsed; }).map(function (s) { return toSchedule(s.parsed); });
+  }
+
+  function markImgs(carriers) {
+    var uniq = [];
+    carriers.forEach(function (c) { if (c && uniq.indexOf(c) < 0) uniq.push(c); });
+    return uniq.slice(0, 2).map(function (c) {
+      return '<img src="' + LOGO + c + '.png" alt="" onerror="this.remove()">';
+    }).join('');
+  }
+
+  function renderPreview() {
+    var pv = $('pv');
+    var note = $('pvnote');
+    var scs = activeSchedules();
+
+    if (!scs.length) {
+      pv.innerHTML = '';
+      pv.style.visibility = 'hidden';
+      note.textContent = '항공편 URL을 붙여넣으면 미리보기가 채워집니다.';
+      return;
+    }
+    pv.style.visibility = 'visible';
+
+    var payNames = pays.filter(Boolean).map(function (c) { return PAY_NAME[c]; });
+    var rowNames = payNames.slice(1).concat(['모든 결제수단']).slice(0, 2);
+
+    if (scs.length === 1) {
+      var sc = scs[0];
+      var d0 = decodeItin(sc.pin[0]) || {};
+      var dN = decodeItin(sc.pin[sc.pin.length - 1]) || {};
+      var codes = sc.pin.map(function (id) { var d = decodeItin(id); return d ? d.flightNo : ''; }).filter(Boolean).join(' · ');
+      var range = sc.pin.length > 1 ? mdd(d0.date) + ' – ' + mdd(dN.date) : mdd(d0.date);
+
+      pv.innerHTML =
+        '<div class="wtop">' + markImgs([d0.carrier]) +
+          '<span class="rt">' + (d0.from || '') + ' → ' + (d0.to || '') + '</span>' +
+          '<span class="cd2 num">' + codes + '</span>' +
+          '<span class="dt num">' + range + '</span>' +
+        '</div>' +
+        '<div class="wbase">' + (payNames[0] || '모든 결제수단') + '</div>' +
+        '<div class="whero"><span class="v num">000,000</span><span class="u">원</span>' +
+          '<span class="dl">— </span></div>' +
+        '<div class="wph">설치 후 가격 기록이 쌓이면 그래프가 그려집니다</div>' +
+        '<div class="wrows">' +
+          rowNames.map(function (n) {
+            return '<div class="wrow"><span class="k">' + n + '</span><span class="p num">000,000원</span></div>';
+          }).join('') +
+        '</div>';
+      note.textContent = '가격은 설치 후 실제 값으로 채워집니다.';
+      return;
+    }
+
+    pv.innerHTML =
+      '<div class="wtop">' +
+        '<span class="rt" style="font-size:12.5px">추적 중인 일정</span>' +
+        '<span class="cd2 num">' + scs.length + '개</span>' +
+        '<span class="dt num">방금</span>' +
+      '</div>' +
+      '<div class="wlist">' +
+        scs.map(function (sc) {
+          var d0 = decodeItin(sc.pin[0]) || {};
+          var codes = sc.pin.map(function (id) { var d = decodeItin(id); return d ? d.flightNo : ''; }).filter(Boolean).join(' · ');
+          var pad = scs.length >= 3 ? 3 : 9;
+          return '<div class="wi" style="padding:' + pad + 'px 0">' +
+            '<span class="marks">' + markImgs(sc.airlines) + '</span>' +
+            '<span class="id"><b>' + (d0.from || '') + ' → ' + (d0.to || '') + '</b>' +
+              '<i class="num">' + codes + ' · ' + mdd(d0.date) + '</i></span>' +
+            '<span class="ph"></span>' +
+            '<span class="pr"><b class="num">000,000원</b><i>—</i></span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    note.textContent = '가격은 설치 후 실제 값으로 채워집니다.';
+  }
+
+  // ── 코드 생성 ───────────────────────────────────────────────
+  function buildConfig() {
+    var scs = activeSchedules();
+    var first = slots.filter(function (s) { return s.parsed; })[0].parsed;
+    var chosen = pays.filter(Boolean);
+    var names = {};
+    chosen.forEach(function (c) { names[c] = PAY_NAME[c]; });
+
+    return {
+      schedules: scs,
+      pay: chosen,
+      payNames: names,
+      adult: first.adult,
+      child: first.child,
+      infant: first.infant,
+      seatClass: first.seatClass,
+      historyLimit: 500,
+      minRefetchMinutes: 2
+    };
+  }
+
+  function mixedSettingsWarning() {
+    var ps = slots.filter(function (s) { return s.parsed; }).map(function (s) { return s.parsed; });
+    if (ps.length < 2) return null;
+    var a = ps[0];
+    for (var i = 1; i < ps.length; i++) {
+      if (ps[i].adult !== a.adult || ps[i].child !== a.child || ps[i].infant !== a.infant || ps[i].seatClass !== a.seatClass) {
+        return '항공편마다 인원 또는 좌석등급이 다릅니다. 첫 번째 항공편의 ' +
+               '성인 ' + a.adult + '명 · ' + SEAT[a.seatClass] + ' 기준으로 모두 조회합니다.';
+      }
+    }
+    return null;
+  }
+
+  function generate() {
+    var cfg = buildConfig();
+    var tpl = $('tpl').textContent;
+    var header =
+      '// 만든 날짜: ' + new Date().toLocaleString('ko-KR') + '\n' +
+      '// 추적 일정: ' + cfg.schedules.map(function (s) { return s.title; }).join(', ') + '\n' +
+      '// 결제수단: ' + (cfg.pay.map(function (c) { return cfg.payNames[c]; }).join(', ') || '모든 결제수단만') + '\n' +
+      '// 조건 변경은 이 CONFIG 만 고치면 됩니다.\n' +
+      'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';';
+
+    var src = tpl.replace('/*__CONFIG__*/', header);
+    $('code').textContent = src;
+    $('meta').textContent = 'widget.js · ' + src.split('\n').length + '줄 · ' + (src.length / 1024).toFixed(0) + 'KB';
+    $('out').classList.add('on');
+
+    var warn = mixedSettingsWarning();
+    toast(warn || '코드를 만들었습니다.');
+    $('out').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── 복사 / 내려받기 ─────────────────────────────────────────
+  function copyCode() {
+    var text = $('code').textContent;
+    if (!text) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { toast('복사했습니다.'); }, fallback);
+    } else { fallback(); }
+
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      toast(ok ? '복사했습니다.' : '복사에 실패했습니다. 코드를 직접 선택해 주세요.');
+    }
+  }
+
+  function download() {
+    var text = $('code').textContent;
+    if (!text) return;
+    var blob = new Blob([text], { type: 'text/javascript;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fare-widget.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 3200);
+  }
+
+  function refreshButton() {
+    var n = activeSchedules().length;
+    var btn = $('gen');
+    btn.disabled = n === 0;
+    btn.textContent = n === 0 ? '코드 만들기' : '코드 만들기 (일정 ' + n + '개)';
+  }
+
+  // ── 시작 ────────────────────────────────────────────────────
+  buildSlots();
+  buildPays();
+  renderPreview();
+  refreshButton();
+  $('gen').addEventListener('click', generate);
+  $('copy').addEventListener('click', copyCode);
+  $('dl').addEventListener('click', download);
+})();
+</script>
+</body>
+</html>
