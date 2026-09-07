@@ -109,36 +109,47 @@
     display: flex; flex-direction: column; line-height: 1.25; letter-spacing: -.02em;
     box-shadow: 0 6px 22px rgba(25,31,40,.12);
   }
+  /* --fs = CONFIG.fontScale. 위젯 코드의 F() 와 같은 배율을 미리보기에도 적용한다 */
+  .wg { --fs: 1; }
   .wtop { display: flex; align-items: center; gap: 7px; flex: none; }
-  .wtop img { width: 20px; height: 20px; border-radius: 6px; display: block; flex: none; }
-  .wtop .rt { font-size: 14.5px; font-weight: 700; letter-spacing: -.03em; }
-  .wtop .cd2 { font-size: 10px; color: var(--w-dim); font-weight: 500; }
-  .wtop .dt { margin-left: auto; font-size: 10px; color: var(--w-dim); font-weight: 500; }
-  .wbase { flex: none; font-size: 9.5px; font-weight: 500; color: var(--w-dim); margin-top: 4px; line-height: 1.2; }
+  .wtop img { width: calc(21px * var(--fs)); height: calc(21px * var(--fs)); border-radius: 6px; display: block; flex: none; }
+  .wtop .rt { font-size: calc(16px * var(--fs)); font-weight: 700; letter-spacing: -.03em; }
+  .wtop .cd2 { font-size: calc(11px * var(--fs)); color: var(--w-dim); font-weight: 500; }
+  .wtop .dt { margin-left: auto; font-size: calc(11px * var(--fs)); color: var(--w-dim); font-weight: 500; }
+  .wbase { flex: none; display: flex; align-items: center; margin-top: 3px; line-height: 1.2; }
+  .wbase .k { font-size: calc(10.5px * var(--fs)); font-weight: 500; color: var(--w-dim); }
+  .refresh {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 0 2px 6px; font-size: calc(10.5px * var(--fs));
+    font-weight: 500; color: var(--w-dim);
+  }
   .whero { flex: none; display: flex; align-items: flex-end; gap: 3px; margin-top: 1px; }
-  .whero .v { font-size: 26px; font-weight: 700; letter-spacing: -.04em; line-height: 1.05; }
-  .whero .u { font-size: 12px; font-weight: 500; color: var(--w-sub); padding-bottom: 2px; }
-  .whero .dl { margin-left: auto; font-size: 12.5px; font-weight: 700; padding-bottom: 3px; color: var(--w-dim); }
-  .wph { flex: none; margin-top: 4px; height: 22px; border-radius: 5px; background: var(--w-hair);
-         display: grid; place-items: center; font-size: 9px; color: var(--w-dim); font-weight: 500; }
+  .whero .v { font-size: calc(29px * var(--fs)); font-weight: 700; letter-spacing: -.04em; line-height: 1.05; }
+  .whero .u { font-size: calc(12.5px * var(--fs)); font-weight: 500; color: var(--w-sub); padding-bottom: 2px; }
+  .whero .dl { margin-left: auto; font-size: calc(14px * var(--fs)); font-weight: 700; padding-bottom: 3px; color: var(--w-dim); }
+  .wph { flex: none; margin-top: 4px; height: calc(20px * var(--fs)); border-radius: 5px; background: var(--w-hair);
+         display: grid; place-items: center; font-size: calc(9.5px * var(--fs)); color: var(--w-dim); font-weight: 500; }
   .wrows { flex: none; margin-top: auto; }
-  .wrow { display: flex; align-items: center; padding: 3px 0; font-size: 10.5px; line-height: 1.25; }
+  .wrow { display: flex; align-items: center; padding: 2px 0; font-size: calc(11.5px * var(--fs)); line-height: 1.25; }
   .wrow + .wrow { border-top: 1px solid var(--w-hair); }
   .wrow .k { color: var(--w-dim); font-weight: 500; }
   .wrow .p { margin-left: auto; font-weight: 700; color: var(--w-sub); }
+
+  /* 리스트: 칸 너비를 못박아 모든 줄에서 같은 x 좌표에 선다 (위젯과 동일한 값) */
   .wlist { flex: none; margin-top: 4px; }
-  .wi { display: flex; align-items: center; gap: 9px; padding: 3px 0; }
+  .wi { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+  .wi.roomy { padding: 8px 0; }
   .wi + .wi { border-top: 1px solid var(--w-hair); }
-  .wi .marks { display: flex; align-items: center; flex: none; }
-  .wi .marks img { width: 17px; height: 17px; border-radius: 5px; display: block; }
+  .wi .marks { display: flex; align-items: center; flex: none; width: var(--col-marks, 28px); }
+  .wi .marks img { width: var(--mark, 17px); height: var(--mark, 17px); border-radius: 5px; display: block; }
   .wi .marks img + img { margin-left: -5px; box-shadow: 0 0 0 1.5px #fff; }
-  .wi .id { min-width: 82px; }
-  .wi .id b { font-size: 12px; font-weight: 700; letter-spacing: -.03em; display: block; }
-  .wi .id i { font-size: 8.5px; font-weight: 500; color: var(--w-dim); font-style: normal; display: block; }
-  .wi .ph { width: 56px; height: 20px; border-radius: 4px; background: var(--w-hair); flex: none; }
-  .wi .pr { margin-left: auto; text-align: right; }
-  .wi .pr b { font-size: 14.5px; font-weight: 700; letter-spacing: -.035em; display: block; }
-  .wi .pr i { font-size: 9.5px; font-weight: 700; color: var(--w-dim); font-style: normal; display: block; }
+  .wi .id { width: var(--col-id, 103px); flex: none; overflow: hidden; }
+  .wi .id b { font-size: calc(13.5px * var(--fs)); font-weight: 700; letter-spacing: -.03em; display: block; white-space: nowrap; }
+  .wi .id i { font-size: calc(9.5px * var(--fs)); font-weight: 500; color: var(--w-dim); font-style: normal; display: block; white-space: nowrap; }
+  .wi .ph { width: var(--col-spark, 54px); height: calc(20px * var(--fs)); border-radius: 4px; background: var(--w-hair); flex: none; }
+  .wi .pr { width: var(--col-price, 87px); flex: none; text-align: right; }
+  .wi .pr b { font-size: calc(16px * var(--fs)); font-weight: 700; letter-spacing: -.035em; display: block; white-space: nowrap; }
+  .wi .pr i { font-size: calc(10.5px * var(--fs)); font-weight: 700; color: var(--w-dim); font-style: normal; display: block; }
   .pvnote { text-align: center; font-size: 11.5px; color: var(--dim); margin: 12px 0 0; }
 
   .out { display: none; }
@@ -209,6 +220,21 @@
   </div>
 
   <div class="card">
+    <h2>글자 크기</h2>
+    <p class="cd">위젯은 아이폰 기종에 맞춰 글자를 자동으로 키웁니다. 그래도 작으면 여기서 더 올리세요.</p>
+    <div class="pay">
+      <span class="n">Aa</span>
+      <select id="fs">
+        <option value="0.95">작게</option>
+        <option value="1" selected>기본</option>
+        <option value="1.1">크게</option>
+        <option value="1.2">더 크게</option>
+      </select>
+    </div>
+    <p class="hint">Pro Max 는 기본값에서 이미 약 13% 크게 나옵니다. 일정이 3개면 여유가 적어 더 키울 때 잘릴 수 있고, 1~2개면 넉넉합니다.</p>
+  </div>
+
+  <div class="card">
     <h2>위젯 미리보기</h2>
     <p class="cd">입력한 항공편이 위젯에 어떻게 들어가는지 확인하세요. 실측 329 × 155 pt.</p>
     <div class="pvwrap"><div class="scaler"><div class="wg" id="pv"></div></div></div>
@@ -268,6 +294,9 @@
 /*__CONFIG__*/
 
 // ── 상수 ─────────────────────────────────────────────────────
+// 문제가 생겨 물어보실 때 이 번호를 같이 알려주시면 어느 빌드인지 바로 압니다.
+const WIDGET_VERSION = '1.2';
+
 const API = 'https://flight-api.naver.com/flight/international/searchFlights';
 const LOGO_BASE = 'https://techminds.pstatic.net/flight/vertical-static/flight/airlines/';
 const UA =
@@ -486,7 +515,18 @@ async function logoFor(code) {
 }
 
 // ── 표시용 헬퍼 ───────────────────────────────────────────────
-const won = (n) => n.toLocaleString('ko-KR');
+// Intl 구현에 기대지 않고 직접 세 자리 콤마를 넣는다.
+// (toLocaleString 은 런타임에 따라 결과가 달라질 수 있어 쓰지 않는다)
+function won(n) {
+  if (typeof n !== 'number' || !isFinite(n)) return '—';
+  const s = String(Math.round(Math.abs(n)));
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 === 0) out += ',';
+    out += s[i];
+  }
+  return (n < 0 ? '-' : '') + out;
+}
 function mdd(d) {
   return d ? d.slice(4, 6) + '.' + d.slice(6, 8) : ''; // 11.20, 12.04 — 자리수를 맞춰 리스트에서 정렬된다
 }
@@ -498,12 +538,86 @@ function agoText(ms) {
   if (h < 24) return h + '시간 전';
   return Math.round(h / 24) + '일 전';
 }
+// 미디엄 위젯 실측 크기(pt)는 기기마다 다르다. 작은 기기 기준으로 그리면
+// 큰 폰에서 글자가 작아 보이므로, 화면 크기로 위젯 크기를 찾아 그만큼 키운다.
+const DEV = (function () {
+  const T = {
+    '440x956': [374, 176], // 16 Pro Max
+    '430x932': [364, 170], // 14/15 Pro Max, Plus
+    '428x926': [364, 170], // 12/13 Pro Max
+    '402x874': [348, 162], // 16 Pro
+    '414x896': [338, 158], // 11, XR, 11 Pro Max
+    '393x852': [338, 158], // 14/15/16 Pro, 15, 16
+    '390x844': [329, 155], // 12/13/14
+    '375x812': [329, 155], // X, XS, 11 Pro, mini
+    '414x736': [348, 157], // 8 Plus
+    '375x667': [321, 148], // SE2/SE3, 8
+    '320x568': [292, 141], // SE1
+  };
+  let box = [329, 155]; // 모르는 기기는 보수적으로
+  try {
+    const s = Device.screenSize();
+    const a = Math.round(Math.min(s.width, s.height));
+    const b = Math.round(Math.max(s.width, s.height));
+    if (T[a + 'x' + b]) box = T[a + 'x' + b];
+  } catch (e) {
+    /* 기본값 사용 */
+  }
+  return { w: box[0], h: box[1] };
+})();
+
+const CONTENT_W = DEV.w - 32; // 좌우 패딩 16씩
+const CONTENT_H = DEV.h - 25; // 상 14 + 하 11
+
+// 329×155 기준(콘텐츠 130pt)에서 딱 맞게 짜뒀으므로, 실제 높이 비율만큼 키운다.
+// 위 표가 조금 틀려도 잘리지 않게 4pt 는 여유로 남긴다.
+const AUTO_SCALE = Math.min(Math.max((CONTENT_H - 4) / 130, 0.9), 1.3);
+
+// 여기에 CONFIG.fontScale 을 곱한다. 1.0 이 기본이고, 올리면 더 커지지만
+// 기기 높이를 넘기면 잘릴 수 있다.
+const FS = (function () {
+  const v = Number(CONFIG.fontScale);
+  const user = isFinite(v) && v > 0 ? v : 1;
+  return Math.min(Math.max(user * AUTO_SCALE, 0.7), 1.7);
+})();
+const F = (n) => Math.round(n * FS * 10) / 10;
+
+// 갱신 시간을 누르면 이 스크립트를 다시 실행해 즉시 새로 조회한다.
+const REFRESH_URL = (function () {
+  try {
+    return 'scriptable:///run?scriptName=' + encodeURIComponent(Script.name());
+  } catch (e) {
+    return null;
+  }
+})();
+
 function txt(parent, s, size, weight, color) {
   const t = parent.addText(s);
   t.font = weight === 'bold' ? Font.boldSystemFont(size) : weight === 'medium' ? Font.mediumSystemFont(size) : Font.systemFont(size);
   t.textColor = new Color(color);
   t.lineLimit = 1;
   return t;
+}
+
+// 기기 폭에 맞춰 늘어나는 1pt 구분선 (폭을 0 으로 두면 자동, 스페이서가 채운다)
+function hairline(parent) {
+  const h = parent.addStack();
+  h.backgroundColor = new Color(CL.hair);
+  h.size = new Size(0, 1);
+  h.addSpacer();
+  return h;
+}
+
+// 우측 상단 갱신 시간 — 누르면 리프레시. 탭 영역을 조금 넓히려 아이콘을 붙인다.
+function refreshTag(parent, label, stale) {
+  const tag = parent.addStack();
+  tag.centerAlignContent();
+  tag.setPadding(2, 6, 2, 0);
+  if (REFRESH_URL) tag.url = REFRESH_URL;
+  txt(tag, (stale ? '⚠︎ ' : '') + label, F(10.5), 'medium', CL.dim);
+  tag.addSpacer(3);
+  txt(tag, '↻', F(11), 'medium', CL.dim);
+  return tag;
 }
 
 function sparkline(w, h, series, hex) {
@@ -626,76 +740,79 @@ async function renderDetail(w, r) {
 
   w.url = r.sc.naverUrl;
 
-  // 헤더
+  // 헤더 — 노선 · 편명 ......... 날짜
   const top = w.addStack();
   top.centerAlignContent();
   const logo = await logoFor(leg0.carrier);
   if (logo) {
     const iv = top.addImage(logo);
-    iv.imageSize = new Size(20, 20);
-    iv.cornerRadius = 6;
+    iv.imageSize = new Size(F(21), F(21));
+    iv.cornerRadius = F(6);
     top.addSpacer(7);
   }
-  txt(top, leg0.from + ' → ' + leg0.to, 14.5, 'bold', CL.text);
+  txt(top, leg0.from + ' → ' + leg0.to, F(16), 'bold', CL.text);
   top.addSpacer(7);
-  txt(top, snap.legs.map((l) => l.flightNo).filter(Boolean).join(' · '), 10, 'medium', CL.dim);
+  txt(top, snap.legs.map((l) => l.flightNo).filter(Boolean).join(' · '), F(11), 'medium', CL.dim);
   top.addSpacer();
   const range = snap.legs.length > 1 ? mdd(leg0.date) + ' – ' + mdd(legN.date) : mdd(leg0.date);
-  txt(top, range, 10, 'medium', CL.dim);
+  txt(top, range, F(11), 'medium', CL.dim);
 
-  // 기준 결제수단
-  w.addSpacer(4);
-  txt(w, snap.label + (r.stale ? ' · 갱신 실패' : ''), 9.5, 'medium', CL.dim);
+  // 기준 결제수단 ......... 갱신 시간(누르면 리프레시)
+  w.addSpacer(3);
+  const base = w.addStack();
+  base.centerAlignContent();
+  txt(base, snap.label, F(10.5), 'medium', CL.dim);
+  base.addSpacer();
+  const stamp = r.history.length ? agoText(r.history[r.history.length - 1][0]) : '—';
+  refreshTag(base, stamp, r.stale);
 
-  // 히어로 가격
+  // 히어로 가격 — 증감은 오른쪽 끝 고정
   const hero = w.addStack();
   hero.bottomAlignContent();
   const v = hero.addText(won(snap.price));
-  v.font = Font.boldSystemFont(26);
+  v.font = Font.boldSystemFont(F(29));
   v.textColor = new Color(CL.text);
   v.minimumScaleFactor = 0.7;
   v.lineLimit = 1;
   hero.addSpacer(3);
   const u = hero.addText('원');
-  u.font = Font.mediumSystemFont(12);
+  u.font = Font.mediumSystemFont(F(12.5));
   u.textColor = new Color(CL.sub);
   hero.addSpacer();
   if (delta) {
     const d = hero.addText((delta > 0 ? '▴ ' : '▾ ') + won(Math.abs(delta)));
-    d.font = Font.boldSystemFont(12.5);
+    d.font = Font.boldSystemFont(F(14));
     d.textColor = new Color(hex);
+    d.lineLimit = 1;
   } else {
-    txt(hero, '변동 없음', 10, 'medium', CL.dim);
+    txt(hero, '변동 없음', F(11), 'medium', CL.dim);
   }
 
   // 그래프
-  const img = sparkline(297, 22, thin(r.history.map((h) => h[1]), 40), hex);
+  const sparkH = F(20);
+  const img = sparkline(CONTENT_W, sparkH, thin(r.history.map((h) => h[1]), 40), hex);
   w.addSpacer(4);
   if (img) {
     const iv = w.addImage(img);
-    iv.imageSize = new Size(297, 22);
+    iv.imageSize = new Size(CONTENT_W, sparkH);
   } else {
     const hint = w.addStack();
-    hint.size = new Size(297, 22);
+    hint.size = new Size(CONTENT_W, sparkH);
     hint.centerAlignContent();
-    txt(hint, '가격 기록이 쌓이면 그래프가 그려집니다', 9, 'regular', CL.dim);
+    txt(hint, '가격 기록이 쌓이면 그래프가 그려집니다', F(9.5), 'regular', CL.dim);
   }
 
   // 나머지 가격 두 줄
   w.addSpacer();
   const rest = snap.rows.slice(1, 3);
   rest.forEach((row, i) => {
-    if (i > 0) {
-      const hair = w.addStack();
-      hair.size = new Size(297, 1);
-      hair.backgroundColor = new Color(CL.hair);
-    }
+    if (i > 0) hairline(w);
     const st = w.addStack();
     st.centerAlignContent();
-    st.setPadding(3, 0, 3, 0);
-    txt(st, row.name, 10.5, 'medium', CL.dim);
+    st.setPadding(2, 0, 2, 0);
+    txt(st, row.name, F(11.5), 'medium', CL.dim);
     st.addSpacer();
-    txt(st, won(row.price) + '원', 10.5, 'bold', CL.sub);
+    txt(st, won(row.price) + '원', F(11.5), 'bold', CL.sub);
   });
 }
 
@@ -706,32 +823,39 @@ async function renderList(w, results) {
 
   const top = w.addStack();
   top.centerAlignContent();
-  txt(top, '추적 중인 일정', 12.5, 'bold', CL.text);
+  txt(top, '추적 중인 일정', F(13), 'bold', CL.text);
   top.addSpacer(7);
-  txt(top, results.length + '개', 10, 'medium', CL.dim);
+  txt(top, results.length + '개', F(10.5), 'medium', CL.dim);
   top.addSpacer();
-  txt(top, (anyStale ? '⚠︎ ' : '') + (newest ? agoText(newest) : '—'), 10, 'medium', CL.dim);
+  refreshTag(top, newest ? agoText(newest) : '—', anyStale);
 
-  const rowH = results.length >= 3 ? 3 : 9;
-  const sparkH = results.length >= 3 ? 20 : 22;
+  // 칸 너비를 미리 못박는다. 내용 길이와 무관하게 모든 줄에서
+  // 마크·노선·그래프·가격이 같은 x 좌표에 선다.
+  const GAP = 8;
+  const MARK = F(17); // 항공사 마크 한 변
+  const COL_MARKS = Math.round(MARK * 1.7); // 두 개가 5pt 겹쳐 들어가는 폭
+  const COL_SPARK = Math.min(F(56), Math.round(CONTENT_W * 0.19));
+  const COL_PRICE = Math.min(F(90), Math.round(CONTENT_W * 0.3));
+  const COL_ID = Math.max(70, CONTENT_W - COL_MARKS - COL_SPARK - COL_PRICE - GAP * 3);
+
+  // 남는 높이를 줄 수만큼 고르게 나눠 위젯을 꽉 채운다.
+  const headerH = Math.round(F(13) * 1.4) + 2;
+  const rowH = Math.floor((CONTENT_H - headerH - (results.length - 1)) / results.length);
+  const sparkH = Math.min(F(22), rowH - 8);
 
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
-    if (i > 0) {
-      const hair = w.addStack();
-      hair.size = new Size(297, 1);
-      hair.backgroundColor = new Color(CL.hair);
-    }
+    if (i > 0) hairline(w);
 
     const row = w.addStack();
+    row.size = new Size(0, rowH);
     row.centerAlignContent();
-    row.setPadding(rowH, 0, rowH, 0);
     row.url = r.sc.naverUrl;
 
     if (!r.snap) {
-      txt(row, r.sc.title || '일정', 12, 'bold', CL.text);
+      txt(row, r.sc.title || '일정', F(12.5), 'bold', CL.text);
       row.addSpacer();
-      txt(row, '조회 실패', 10, 'medium', CL.dim);
+      txt(row, '조회 실패', F(10.5), 'medium', CL.dim);
       continue;
     }
 
@@ -740,47 +864,66 @@ async function renderList(w, results) {
     const delta = r.prevPrice != null ? snap.price - r.prevPrice : 0;
     const hex = delta > 0 ? CL.up : CL.down;
 
-    // 항공사 마크 (왕복 항공사가 다르면 둘 다)
+    // 항공사 마크 (왕복 항공사가 다르면 둘 다) — 폭 고정
     const carriers = [];
     for (const l of snap.legs) if (l.carrier && carriers.indexOf(l.carrier) < 0) carriers.push(l.carrier);
     const marks = row.addStack();
+    marks.size = new Size(COL_MARKS, 0);
     marks.centerAlignContent();
     for (let c = 0; c < Math.min(carriers.length, 2); c++) {
       const img = await logoFor(carriers[c]);
       if (!img) continue;
       if (c > 0) marks.addSpacer(2);
       const iv = marks.addImage(img);
-      iv.imageSize = new Size(17, 17);
-      iv.cornerRadius = 5;
+      iv.imageSize = new Size(MARK, MARK);
+      iv.cornerRadius = Math.round(MARK * 0.29);
     }
-    row.addSpacer(9);
+    marks.addSpacer();
+    row.addSpacer(GAP);
 
+    // 노선 + 편명·날짜 — 폭 고정, 넘치면 줄이지 않고 한 줄로 자른다
     const id = row.addStack();
+    id.size = new Size(COL_ID, 0);
     id.layoutVertically();
-    txt(id, leg0.from + ' → ' + leg0.to, 12, 'bold', CL.text);
-    txt(id, snap.legs.map((l) => l.flightNo).filter(Boolean).join(' · ') + ' · ' + mdd(leg0.date), 8.5, 'medium', CL.dim);
+    txt(id, leg0.from + ' → ' + leg0.to, F(13.5), 'bold', CL.text);
+    const sub = txt(
+      id,
+      snap.legs.map((l) => l.flightNo).filter(Boolean).join(' · ') + ' · ' + mdd(leg0.date),
+      F(9.5),
+      'medium',
+      CL.dim
+    );
+    sub.minimumScaleFactor = 0.85;
+    row.addSpacer(GAP);
 
-    row.addSpacer(9);
-    const img = sparkline(56, sparkH, thin(r.history.map((h) => h[1]), 20), hex);
+    // 그래프 — 폭 고정
+    const sparkBox = row.addStack();
+    sparkBox.size = new Size(COL_SPARK, 0);
+    sparkBox.centerAlignContent();
+    const img = sparkline(COL_SPARK, sparkH, thin(r.history.map((h) => h[1]), 20), hex);
     if (img) {
-      const iv = row.addImage(img);
-      iv.imageSize = new Size(56, sparkH);
+      const iv = sparkBox.addImage(img);
+      iv.imageSize = new Size(COL_SPARK, sparkH);
     } else {
-      row.addSpacer(56);
+      sparkBox.addSpacer();
     }
+    row.addSpacer(GAP);
 
-    row.addSpacer();
+    // 가격 + 증감 — 폭 고정, 오른쪽 정렬
     const pr = row.addStack();
+    pr.size = new Size(COL_PRICE, 0);
     pr.layoutVertically();
     const pv = pr.addText(won(snap.price) + '원');
-    pv.font = Font.boldSystemFont(14.5);
+    pv.font = Font.boldSystemFont(F(16));
     pv.textColor = new Color(CL.text);
     pv.rightAlignText();
     pv.lineLimit = 1;
+    pv.minimumScaleFactor = 0.7;
     const dv = pr.addText(delta ? (delta > 0 ? '▴ ' : '▾ ') + won(Math.abs(delta)) : '변동 없음');
-    dv.font = Font.boldSystemFont(9.5);
+    dv.font = Font.boldSystemFont(F(10.5));
     dv.textColor = new Color(delta ? hex : CL.dim);
     dv.rightAlignText();
+    dv.lineLimit = 1;
   }
 }
 
@@ -801,17 +944,22 @@ try {
     msg.font = Font.systemFont(10);
     msg.textColor = new Color(CL.dim);
     msg.lineLimit = 3;
+    widget.addSpacer();
+    txt(widget, 'v' + WIDGET_VERSION, 8, 'regular', CL.dim);
   } else if (usable.length === 1) {
     await renderDetail(widget, usable[0]);
   } else {
     await renderList(widget, usable);
   }
 } catch (e) {
+  // 여기까지 온 오류는 위젯 안에 글로 보여준다 — 홈 화면이 빈칸이 되지 않게.
   txt(widget, '오류', 13, 'bold', CL.text);
   const msg = widget.addText(e.message);
   msg.font = Font.systemFont(10);
   msg.textColor = new Color(CL.dim);
-  msg.lineLimit = 3;
+  msg.lineLimit = 4;
+  widget.addSpacer();
+  txt(widget, 'v' + WIDGET_VERSION + ' · 이 문구를 그대로 알려주세요', 8, 'regular', CL.dim);
 }
 
 if (config.runsInWidget) {
@@ -945,6 +1093,7 @@ Script.complete();
                { raw: '', parsed: null, error: null },
                { raw: '', parsed: null, error: null }];
   var pays = ['A01/B96', 'A01/B01'];
+  var fontScale = 1;
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -1114,6 +1263,24 @@ Script.complete();
     var note = $('pvnote');
     var scs = activeSchedules();
 
+    // 위젯 코드와 같은 식으로 칸 폭을 계산해 미리보기에도 그대로 적용한다.
+    // 미리보기는 329×155pt(작은 기종) 기준이라 자동 배율 0.969 가 곱해진다.
+    var CW = 297;
+    var effFs = fontScale * 0.969;
+    var Fp = function (n) { return Math.round(n * effFs * 10) / 10; };
+    var mark = Fp(17);
+    var colMarks = Math.round(mark * 1.7);
+    var colSpark = Math.min(Fp(56), Math.round(CW * 0.19));
+    var colPrice = Math.min(Fp(90), Math.round(CW * 0.3));
+    var colId = Math.max(70, CW - colMarks - colSpark - colPrice - 24);
+
+    pv.style.setProperty('--fs', String(effFs));
+    pv.style.setProperty('--mark', mark + 'px');
+    pv.style.setProperty('--col-marks', colMarks + 'px');
+    pv.style.setProperty('--col-spark', colSpark + 'px');
+    pv.style.setProperty('--col-price', colPrice + 'px');
+    pv.style.setProperty('--col-id', colId + 'px');
+
     if (!scs.length) {
       pv.innerHTML = '';
       pv.style.visibility = 'hidden';
@@ -1138,40 +1305,40 @@ Script.complete();
           '<span class="cd2 num">' + codes + '</span>' +
           '<span class="dt num">' + range + '</span>' +
         '</div>' +
-        '<div class="wbase">' + (payNames[0] || '모든 결제수단') + '</div>' +
+        '<div class="wbase"><span class="k">' + (payNames[0] || '모든 결제수단') + '</span>' +
+          '<span class="refresh">방금 <span>↻</span></span></div>' +
         '<div class="whero"><span class="v num">000,000</span><span class="u">원</span>' +
-          '<span class="dl">— </span></div>' +
+          '<span class="dl">변동 없음</span></div>' +
         '<div class="wph">설치 후 가격 기록이 쌓이면 그래프가 그려집니다</div>' +
         '<div class="wrows">' +
           rowNames.map(function (n) {
             return '<div class="wrow"><span class="k">' + n + '</span><span class="p num">000,000원</span></div>';
           }).join('') +
         '</div>';
-      note.textContent = '가격은 설치 후 실제 값으로 채워집니다.';
+      note.textContent = '가격은 설치 후 실제 값으로 채워집니다. 오른쪽 위 시간을 누르면 즉시 다시 조회합니다.';
       return;
     }
 
     pv.innerHTML =
       '<div class="wtop">' +
-        '<span class="rt" style="font-size:12.5px">추적 중인 일정</span>' +
+        '<span class="rt" style="font-size:calc(13px * var(--fs))">추적 중인 일정</span>' +
         '<span class="cd2 num">' + scs.length + '개</span>' +
-        '<span class="dt num">방금</span>' +
+        '<span class="dt"><span class="refresh">방금 <span>↻</span></span></span>' +
       '</div>' +
       '<div class="wlist">' +
         scs.map(function (sc) {
           var d0 = decodeItin(sc.pin[0]) || {};
           var codes = sc.pin.map(function (id) { var d = decodeItin(id); return d ? d.flightNo : ''; }).filter(Boolean).join(' · ');
-          var pad = scs.length >= 3 ? 3 : 9;
-          return '<div class="wi" style="padding:' + pad + 'px 0">' +
+          return '<div class="wi' + (scs.length >= 3 ? '' : ' roomy') + '">' +
             '<span class="marks">' + markImgs(sc.airlines) + '</span>' +
             '<span class="id"><b>' + (d0.from || '') + ' → ' + (d0.to || '') + '</b>' +
               '<i class="num">' + codes + ' · ' + mdd(d0.date) + '</i></span>' +
             '<span class="ph"></span>' +
-            '<span class="pr"><b class="num">000,000원</b><i>—</i></span>' +
+            '<span class="pr"><b class="num">000,000원</b><i>변동 없음</i></span>' +
           '</div>';
         }).join('') +
       '</div>';
-    note.textContent = '가격은 설치 후 실제 값으로 채워집니다.';
+    note.textContent = '가격은 설치 후 실제 값으로 채워집니다. 오른쪽 위 시간을 누르면 즉시 다시 조회합니다.';
   }
 
   // ── 코드 생성 ───────────────────────────────────────────────
@@ -1190,6 +1357,7 @@ Script.complete();
       child: first.child,
       infant: first.infant,
       seatClass: first.seatClass,
+      fontScale: fontScale,
       historyLimit: 500,
       minRefetchMinutes: 2
     };
@@ -1211,7 +1379,10 @@ Script.complete();
   function generate() {
     var cfg = buildConfig();
     var tpl = $('tpl').textContent;
+    var vm = /WIDGET_VERSION = '([^']+)'/.exec(tpl);
+    var ver = vm ? vm[1] : '?';
     var header =
+      '// widget v' + ver + '\n' +
       '// 만든 날짜: ' + new Date().toLocaleString('ko-KR') + '\n' +
       '// 추적 일정: ' + cfg.schedules.map(function (s) { return s.title; }).join(', ') + '\n' +
       '// 결제수단: ' + (cfg.pay.map(function (c) { return cfg.payNames[c]; }).join(', ') || '모든 결제수단만') + '\n' +
@@ -1220,7 +1391,7 @@ Script.complete();
 
     var src = tpl.replace('/*__CONFIG__*/', header);
     $('code').textContent = src;
-    $('meta').textContent = 'widget.js · ' + src.split('\n').length + '줄 · ' + (src.length / 1024).toFixed(0) + 'KB';
+    $('meta').textContent = 'widget.js · v' + ver + ' · ' + src.split('\n').length + '줄 · ' + (src.length / 1024).toFixed(0) + 'KB';
     $('out').classList.add('on');
 
     var warn = mixedSettingsWarning();
@@ -1284,6 +1455,10 @@ Script.complete();
   buildPays();
   renderPreview();
   refreshButton();
+  $('fs').addEventListener('change', function () {
+    fontScale = Number(this.value) || 1;
+    renderPreview();
+  });
   $('gen').addEventListener('click', generate);
   $('copy').addEventListener('click', copyCode);
   $('dl').addEventListener('click', download);
